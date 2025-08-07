@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Daily Planner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="bg-white text-gray-900 min-h-screen transition-colors">
+    <div class="max-w-3xl mx-auto p-4">
+      <!-- Language Selection -->
+      <div id="languageModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded shadow-md text-center">
+          <h2 class="text-xl font-bold mb-4">Choose your language</h2>
+          <div class="space-x-2">
+            <button onclick="setLanguage('uz')">🇺🇿 Uzbek</button>
+            <button onclick="setLanguage('ru')">🇷🇺 Russian</button>
+            <button onclick="setLanguage('en')">🇺🇸 English</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Header -->
+      <div class="flex justify-between items-center mb-4">
+        <h1 class="text-2xl font-bold">📅 <span id="title">Daily Planner</span></h1>
+      </div>
+
+      <!-- Quote -->
+      <div class="mb-4 italic text-sm text-gray-600" id="quote"></div>
+
+      <!-- Task Input -->
+      <div class="mb-4 flex flex-wrap gap-2">
+        <input type="time" id="startTime" class="border p-1" />
+        <input type="time" id="endTime" class="border p-1" />
+        <input type="text" id="taskText" class="border p-1 w-full sm:w-auto flex-grow" placeholder="Enter task..." />
+        <button onclick="addTask()" class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">Add</button>
+      </div>
+
+      <!-- Task List -->
+      <ul id="taskList" class="space-y-2"></ul>
+
+      <!-- Stats -->
+      <div class="mt-6">
+        <div id="stats" class="text-sm"></div>
+      </div>
+    </div>
+
+    <script>
+      const quotes = {
+        uz: "Bugun zo‘r kun bo‘ladi! Harakatda davom et!",
+        ru: "Сегодня отличный день для новых побед!",
+        en: "Today is a great day to achieve something amazing!"
+      };
+
+      let tasks = JSON.parse(localStorage.getItem("tasks") || "[]");
+      let language = localStorage.getItem("language") || null;
+
+      if (language) {
+        document.getElementById("languageModal").style.display = "none";
+        loadContent();
+      }
+
+      function setLanguage(lang) {
+        language = lang;
+        localStorage.setItem("language", lang);
+        document.getElementById("languageModal").style.display = "none";
+        loadContent();
+      }
+
+      function loadContent() {
+        document.getElementById("quote").textContent = quotes[language];
+        renderTasks();
+        updateStats();
+      }
+
+      function addTask() {
+        const start = document.getElementById("startTime").value;
+        const end = document.getElementById("endTime").value;
+        const text = document.getElementById("taskText").value;
+        if (!text || !start || !end) return alert("Please fill all fields!");
+
+        tasks.push({ start, end, text, done: false });
+        localStorage.setItem("tasks", JSON.stringify(tasks));
+        renderTasks();
+        updateStats();
+        document.getElementById("taskText").value = "";
+      }
+
+      function renderTasks() {
+        const list = document.getElementById("taskList");
+        list.innerHTML = "";
+        tasks.forEach((task, index) => {
+          const li = document.createElement("li");
+          li.className = "border p-2 rounded flex justify-between items-center";
+          li.innerHTML = `
+            <div>
+              <span class="font-semibold">${task.start}-${task.end}</span>
+              <span class="ml-2 ${task.done ? 'line-through text-gray-400' : ''}">${task.text}</span>
+            </div>
+            <div class="space-x-2">
+              <button onclick="toggleDone(${index})">${task.done ? "✅" : "✔️"}</button>
+              <button onclick="deleteTask(${index})">🗑️</button>
+            </div>
+          `;
+          list.appendChild(li);
+        });
+      }
+
+      function toggleDone(index) {
+        tasks[index].done = !tasks[index].done;
+        localStorage.setItem("tasks", JSON.stringify(tasks));
+        renderTasks();
+        updateStats();
+      }
+
+      function deleteTask(index) {
+        tasks.splice(index, 1);
+        localStorage.setItem("tasks", JSON.stringify(tasks));
+        renderTasks();
+        updateStats();
+      }
+
+      function updateStats() {
+        const done = tasks.filter(t => t.done).length;
+        const total = tasks.length;
+        document.getElementById("stats").textContent = `${done}/${total} tasks done`;
+      }
+    </script>
+  </body>
+</html>
